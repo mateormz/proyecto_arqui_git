@@ -16,6 +16,7 @@ module alu(input  [31:0] SrcA, SrcB,
             3'b010: ALUResult = SrcA & SrcB;     // AND
             3'b011: ALUResult = SrcA | SrcB;     // ORR
             3'b100: ALUResult = SrcB;            // MOV (A = 0, B = val)
+            3'b101: ALUResult = SrcA * SrcB;
             default: ALUResult = 32'hxxxxxxxx;
         endcase
     end

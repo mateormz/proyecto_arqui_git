@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-
 module controller (
 	clk,
 	reset,
@@ -32,17 +31,20 @@ module controller (
 	output wire [1:0] ResultSrc;
 	output wire [1:0] ImmSrc;
 	output wire [2:0] ALUControl;
+	
 	wire [1:0] FlagW;
 	wire PCS;
 	wire NextPC;
 	wire RegW;
 	wire MemW;
+
 	decode dec(
 		.clk(clk),
 		.reset(reset),
 		.Op(Instr[27:26]),
 		.Funct(Instr[25:20]),
 		.Rd(Instr[15:12]),
+		.InstrLow(Instr[7:4]),
 		.FlagW(FlagW),
 		.PCS(PCS),
 		.NextPC(NextPC),
@@ -57,6 +59,7 @@ module controller (
 		.RegSrc(RegSrc),
 		.ALUControl(ALUControl)
 	);
+
 	condlogic cl(
 		.clk(clk),
 		.reset(reset),

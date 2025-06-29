@@ -83,16 +83,16 @@ module mainfsm (
 	
 	always @(*)
 		case (state)
-			FETCH:    controls = 13'b100010_10_01_10_0;
-			DECODE:   controls = 13'b000000_10_01_10_0;
-			EXECUTER: controls = 13'b000000_00_00_00_1;
-			EXECUTEI: controls = 13'b000000_00_00_01_1;
+			FETCH:    controls = 13'b1_0_0_0_1_0_10_01_10_0;
+			DECODE:   controls = 13'b0000001001100;
+			EXECUTER: controls = 13'b0000000000001;
+			EXECUTEI: controls = 13'b0000000000011;
 			ALUWB:    controls = 13'b0001000000000;
 			MEMADR:   controls = 13'b0000000000010;
 			MEMWR:    controls = 13'b0010010000000;
 			MEMRD:    controls = 13'b0000010000000;
 			MEMWB:    controls = 13'b0001000100000;
-			BRANCH:   controls = 13'b0100001010010;
+			BRANCH:   controls = 13'b0_1_0_0_0_0_1_0_10_01_0_;
 			default:  controls = 13'bxxxxxxxxxxxxx;
 		endcase
 		

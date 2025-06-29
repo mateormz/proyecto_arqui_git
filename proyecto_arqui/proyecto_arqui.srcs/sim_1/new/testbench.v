@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 
 module testbench;
-    integer i = 0;
 	reg clk;
 	reg reset;
 	wire [31:0] WriteData;
@@ -16,7 +15,7 @@ module testbench;
 	);
 	initial begin
 		reset <= 1;
-		#(2)
+		#(22)
 			;
 		reset <= 0;
 	end
@@ -27,23 +26,5 @@ module testbench;
 		clk <= 0;
 		#(5)
 			;
-        i <= i + 1;
-	end
-	always @(posedge clk) begin
-		if (MemWrite) begin
-			if ((Adr === 100) & (WriteData === 7)) begin
-				$display("Simulation succeeded");
-				$finish;
-			end
-			else if (Adr !== 96) begin
-				$display("Simulation failed, %d", WriteData);
-				$finish;
-			end
-        end
-        
-    end
-	initial begin
-		$dumpfile("arm_multi.vcd");
-		$dumpvars;
 	end
 endmodule

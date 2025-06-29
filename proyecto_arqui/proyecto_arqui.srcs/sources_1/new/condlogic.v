@@ -31,6 +31,8 @@ module condlogic (
 	wire [3:0] Flags;
 	wire CondEx;
 	
+	assign FlagWrite = FlagW & {2 {CondEx}};
+	
 	flopenr #(2) flagreg32(
 		.clk(clk),
 		.reset(reset),
@@ -53,7 +55,6 @@ module condlogic (
 		.CondEx(CondEx)
 	);
 	
-	assign FlagWrite = FlagW & {2 {CondEx}};
 	assign PCWrite = (PCS & CondEx) | NextPC;
 	assign RegWrite = RegW & CondEx;
 	assign MemWrite = MemW & CondEx;
