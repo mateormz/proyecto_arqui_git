@@ -53,8 +53,8 @@ module datapath (
 	wire [3:0] RA2;
 	wire [3:0] WA3;
 
-	wire IsMUL;
-	assign IsMUL = (Instr[27:25] == 3'b000) && (Instr[24:21] == 4'b0000) && (Instr[7:4] == 4'b1001);
+	wire MulCondition;
+	assign MulCondition = (Instr[27:22] == 6'b000000) && (Instr[7:4] == 4'b1001);
 
 	flopenr #(32) pcreg (
 		.clk(clk),
@@ -87,20 +87,20 @@ module datapath (
 	);
 
 	mux2 #(4) ra1mux (
-		.d0(IsMUL ? Instr[3:0] : Instr[19:16]),
+		.d0(MulCondition ? Instr[3:0] : Instr[19:16]),
 		.d1(4'b1111),
 		.s(RegSrc[0]),
 		.y(RA1)
 	);
 
 	mux2 #(4) ra2mux (
-		.d0(IsMUL ? Instr[11:8] : Instr[3:0]),
+		.d0(MulCondition ? Instr[11:8] : Instr[3:0]),
 		.d1(Instr[15:12]),
 		.s(RegSrc[1]),
 		.y(RA2)
 	);
 
-	assign WA3 = IsMUL ? Instr[19:16] : Instr[15:12];
+	assign WA3 = MulCondition ? Instr[19:16] : Instr[15:12];
 
 	regfile rf (
 		.clk(clk),

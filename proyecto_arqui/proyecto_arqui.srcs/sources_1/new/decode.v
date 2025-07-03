@@ -7,6 +7,7 @@ module decode (
     Funct,
     Rd,
     InstrLow,
+
     FlagW,
     PCS,
     NextPC,
@@ -27,6 +28,7 @@ module decode (
     input wire [5:0] Funct;
     input wire [3:0] Rd;
     input wire [3:0] InstrLow;
+
     output reg [1:0] FlagW;
     output wire PCS;
     output wire NextPC;
@@ -43,6 +45,10 @@ module decode (
     
     wire Branch;
     wire ALUOp;
+    wire MulCondition;  // Señal para detectar condición de MUL
+    
+    // Detectar cuando Op=00 (bits 27:26) y Funct[5:2]=0000 (bits 25:22) y InstrLow=1001
+    assign MulCondition = (Op == 2'b00) && (Funct[5:2] == 4'b0000) && (InstrLow == 4'b1001);
     
     mainfsm fsm(
         .clk(clk),
@@ -68,23 +74,24 @@ module decode (
     
     always @(*) begin
         if (ALUOp) begin
-            case (Funct[4:1])
-                4'b0100: ALUControl = 3'b000;
-                4'b0010: ALUControl = 3'b001;
-                4'b0000: begin
-                    if (InstrLow == 4'b1001)
-                        ALUControl = 3'b101;
-                    else
-                        ALUControl = 3'b010;
-                end
-                4'b1100: ALUControl = 3'b011;
-                4'b1101: ALUControl = 3'b100;
-                default: ALUControl = 3'bxxx;
-            endcase
+            // Primero verificar si es una operación MUL
+            if (MulCondition) begin
+                ALUControl = 3'b101;  // Código para MUL
+            end else begin
+                case (Funct[4:1])
+                    4'b0100: ALUControl = 3'b000;  // ADD
+                    4'b0010: ALUControl = 3'b001;  // SUB
+                    4'b0000: ALUControl = 3'b010;  // AND
+                    4'b1100: ALUControl = 3'b011;  // ORR
+                    4'b1101: ALUControl = 3'b100;  // MOV
+                    default: ALUControl = 3'bxxx;
+                endcase
+            end
             
-            if (InstrLow == 4'b1001 && Funct[4:1] == 4'b0000) begin
-                FlagW[1] = Funct[0];
-                FlagW[0] = 1'b0;
+            // Configuración de FlagW
+            if (MulCondition) begin
+                FlagW[1] = Funct[0];  // S bit para MUL
+                FlagW[0] = 1'b0;      // MUL no afecta carry flag
             end else begin
                 FlagW[1] = Funct[0];
                 FlagW[0] = Funct[0] & ((ALUControl == 3'b000) | (ALUControl == 3'b001));
