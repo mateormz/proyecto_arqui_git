@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 module decode (
     clk,
     reset,
@@ -7,7 +5,7 @@ module decode (
     Funct,
     Rd,
     InstrLow,
-
+    UMullState,  // Nueva entrada para saber el estado de UMULL
     FlagW,
     PCS,
     NextPC,
@@ -20,7 +18,8 @@ module decode (
     ALUSrcB,
     ImmSrc,
     RegSrc,
-    ALUControl
+    ALUControl,
+    UMullCondition
 );
     input wire clk;
     input wire reset;
@@ -28,7 +27,7 @@ module decode (
     input wire [5:0] Funct;
     input wire [3:0] Rd;
     input wire [3:0] InstrLow;
-
+    input wire UMullState;  // 0 = primer ciclo (RdLo), 1 = segundo ciclo (RdHi)
     output reg [1:0] FlagW;
     output wire PCS;
     output wire NextPC;
@@ -42,19 +41,23 @@ module decode (
     output wire [1:0] ImmSrc;
     output wire [1:0] RegSrc;
     output reg [2:0] ALUControl;
+    output wire UMullCondition;
     
     wire Branch;
     wire ALUOp;
-    wire MulCondition;  // Señal para detectar condición de MUL
+    wire MulCondition;   // Señal para detectar condición de MUL
     
     // Detectar cuando Op=00 (bits 27:26) y Funct[5:2]=0000 (bits 25:22) y InstrLow=1001
-    assign MulCondition = (Op == 2'b00) && (Funct[5:2] == 4'b0000) && (InstrLow == 4'b1001);
+    assign MulCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00000) && (InstrLow == 4'b1001);
+    
+    assign UMullCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00100) && (InstrLow == 4'b1001);
     
     mainfsm fsm(
         .clk(clk),
         .reset(reset),
         .Op(Op),
         .Funct(Funct),
+        .UMullCondition(UMullCondition),
         .IRWrite(IRWrite),
         .AdrSrc(AdrSrc),
         .ALUSrcA(ALUSrcA),
@@ -64,7 +67,8 @@ module decode (
         .RegW(RegW),
         .MemW(MemW),
         .Branch(Branch),
-        .ALUOp(ALUOp)
+        .ALUOp(ALUOp),
+        .UMullState(UMullState)
     );
     
     assign ImmSrc = Op;
@@ -74,8 +78,12 @@ module decode (
     
     always @(*) begin
         if (ALUOp) begin
-            // Primero verificar si es una operación MUL
-            if (MulCondition) begin
+            // Primero verificar si es una operación UMULL
+            if (UMullCondition) begin
+                ALUControl = UMullState ? 3'b111 : 3'b110;  // 111 para parte alta, 110 para parte baja
+            end
+            // Luego verificar si es una operación MUL
+            else if (MulCondition) begin
                 ALUControl = 3'b101;  // Código para MUL
             end else begin
                 case (Funct[4:1])
@@ -89,7 +97,10 @@ module decode (
             end
             
             // Configuración de FlagW
-            if (MulCondition) begin
+            if (UMullCondition) begin
+                FlagW[1] = Funct[0] & UMullState;  // S bit para UMULL, solo en segundo ciclo
+                FlagW[0] = 1'b0;                   // UMULL no afecta carry flag
+            end else if (MulCondition) begin
                 FlagW[1] = Funct[0];  // S bit para MUL
                 FlagW[0] = 1'b0;      // MUL no afecta carry flag
             end else begin

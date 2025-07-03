@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 module arm (
 	clk,
 	reset,
@@ -14,6 +12,7 @@ module arm (
 	output wire [31:0] Adr;
 	output wire [31:0] WriteData;
 	input wire [31:0] ReadData;
+
 	wire [31:0] Instr;
 	wire [3:0] ALUFlags;
 	wire PCWrite;
@@ -24,12 +23,14 @@ module arm (
 	wire [1:0] ALUSrcA;
 	wire [1:0] ALUSrcB;
 	wire [1:0] ImmSrc;
-	wire [2:0] ALUControl;
 	wire [1:0] ResultSrc;
+	wire [2:0] ALUControl;
+	wire UMullState; // ? Nueva señal
+
 	controller c(
 		.clk(clk),
 		.reset(reset),
-		.Instr(Instr[31:0]),
+		.Instr(Instr),
 		.ALUFlags(ALUFlags),
 		.PCWrite(PCWrite),
 		.MemWrite(MemWrite),
@@ -41,8 +42,10 @@ module arm (
 		.ALUSrcB(ALUSrcB),
 		.ResultSrc(ResultSrc),
 		.ImmSrc(ImmSrc),
-		.ALUControl(ALUControl)
+		.ALUControl(ALUControl),
+		.UMullState(UMullState)  // ? Conexión con controller
 	);
+
 	datapath dp(
 		.clk(clk),
 		.reset(reset),
@@ -60,6 +63,7 @@ module arm (
 		.ALUSrcB(ALUSrcB),
 		.ResultSrc(ResultSrc),
 		.ImmSrc(ImmSrc),
-		.ALUControl(ALUControl)
+		.ALUControl(ALUControl),
+		.UMullState(UMullState)  // ? Conexión con datapath
 	);
 endmodule
