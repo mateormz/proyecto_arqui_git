@@ -47,12 +47,12 @@ module mainfsm (
     localparam [3:0] EXECUTEI = 7;
     localparam [3:0] ALUWB = 8;
     localparam [3:0] BRANCH = 9;
-    localparam [3:0] UMULL1 = 10;   // Estado para UMULL primera escritura (RdLo)
-    localparam [3:0] UMULL2 = 11;   // Estado para UMULL segunda escritura (RdHi)
+    localparam [3:0] UMULL1 = 10;   // Estado para UMULL primera escritura (RdLo) - solo guardado
+    localparam [3:0] UMULL2 = 11;   // Estado para UMULL segunda escritura (RdHi) - solo guardado
     localparam [3:0] UNKNOWN = 12;
     
     // Señal para indicar si estamos en el segundo ciclo de UMULL
-    assign UMullState = (state == UMULL2);
+    assign UMullState = (state == UMULL1);
     
     always @(posedge clk or posedge reset)
         if (reset)
@@ -67,7 +67,7 @@ module mainfsm (
                 case (Op)
                     2'b00: begin
                         if (UMullCondition) // Usar UMullCondition del decode
-                            nextstate = UMULL1;
+                            nextstate = EXECUTER;  // Ir a EXECUTER para hacer el cálculo
                         else if (Funct[5])
                             nextstate = EXECUTEI;
                         else
@@ -77,7 +77,12 @@ module mainfsm (
                     2'b10: nextstate = BRANCH;
                     default: nextstate = UNKNOWN;
                 endcase
-            EXECUTER: nextstate = ALUWB;
+            EXECUTER: begin
+                if (UMullCondition)
+                    nextstate = UMULL1;  // Después del cálculo, ir a guardar RdLo
+                else
+                    nextstate = ALUWB;
+            end
             EXECUTEI: nextstate = ALUWB;
             UMULL1: nextstate = UMULL2;     // Después de escribir RdLo, ir a escribir RdHi
             UMULL2: nextstate = FETCH;      // Después de escribir RdHi, volver a FETCH
@@ -98,11 +103,11 @@ module mainfsm (
         case (state)
             FETCH:    controls = 13'b1_0_0_0_1_0_10_01_10_0;
             DECODE:   controls = 13'b0000001001100;
-            EXECUTER: controls = 13'b0000000000001;
+            EXECUTER: controls = 13'b0000000000001;  // Hacer cálculo (ALUOp = 1)
             EXECUTEI: controls = 13'b0000000000011;
             ALUWB:    controls = 13'b0001000000000;
-            UMULL1:   controls = 13'b0001000000001;  // Escribir RdLo
-            UMULL2:   controls = 13'b0001000000001;  // Escribir RdHi
+            UMULL1:   controls = 13'b0001010000001;  // Escribir RdLo (RegW=1, ResultSrc=10 para ALUResult)
+            UMULL2:   controls = 13'b0001010000000;  // Escribir RdHi (RegW=1, ResultSrc=10 para ALUResult)
             MEMADR:   controls = 13'b0000000000010;
             MEMWR:    controls = 13'b0010010000000;
             MEMRD:    controls = 13'b0000010000000;

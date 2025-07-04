@@ -97,7 +97,7 @@ module datapath (
 
     // Registro de escritura (corregido para alternar entre RdLo y RdHi en UMULL)
     assign WA3 = UMullCondition ?
-                 (UMullState ? Instr[19:16] : Instr[15:12]) :
+                 (UMullState ? Instr[15:12] : Instr[19:16]) :
                  (MulCondition ? Instr[19:16] : Instr[15:12]);
 
     // Banco de registros
