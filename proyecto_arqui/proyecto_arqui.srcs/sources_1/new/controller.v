@@ -32,7 +32,7 @@ module controller (
     output wire [1:0] ALUSrcB;
     output wire [1:0] ResultSrc;
     output wire [1:0] ImmSrc;
-    output wire [2:0] ALUControl;
+    output wire [3:0] ALUControl;
     output wire UMullState;
     output wire SMullCondition;  // ? NUEVA SALIDA
     

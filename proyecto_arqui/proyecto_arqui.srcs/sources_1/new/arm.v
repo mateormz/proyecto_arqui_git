@@ -25,7 +25,7 @@ module arm (
 	wire [1:0] ALUSrcB;
 	wire [1:0] ImmSrc;
 	wire [1:0] ResultSrc;
-	wire [2:0] ALUControl;
+	wire [3:0] ALUControl;
 	wire UMullState; // ? Nueva señal
     wire SMullCondition;  // ? AGREGAR
 

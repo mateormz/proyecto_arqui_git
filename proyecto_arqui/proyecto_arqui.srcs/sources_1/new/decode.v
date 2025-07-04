@@ -41,7 +41,7 @@ module decode (
     output wire [1:0] ALUSrcB;
     output wire [1:0] ImmSrc;
     output wire [1:0] RegSrc;
-    output reg [2:0] ALUControl;
+    output reg [3:0] ALUControl;
     output wire UMullCondition;
     output wire SMullCondition;  // NUEVA SALIDA
     
@@ -87,19 +87,19 @@ module decode (
         if (ALUOp) begin
             // Primero verificar si es una operación UMULL
             if (LongMullCondition) begin  // UMULL o SMULL
-                ALUControl = UMullState ? 3'b111 : 3'b110;  // 111 para parte alta, 110 para parte baja
+                ALUControl = UMullState ? 4'b0111 : 4'b0110;  // 111 para parte alta, 110 para parte baja
             end
             // Luego verificar si es una operación MUL
             else if (MulCondition) begin
-                ALUControl = 3'b101;  // Código para MUL
+                ALUControl = 4'b0101;  // Código para MUL
             end else begin
                 case (Funct[4:1])
-                    4'b0100: ALUControl = 3'b000;  // ADD
-                    4'b0010: ALUControl = 3'b001;  // SUB
-                    4'b0000: ALUControl = 3'b010;  // AND
-                    4'b1100: ALUControl = 3'b011;  // ORR
-                    4'b1101: ALUControl = 3'b100;  // MOV
-                    default: ALUControl = 3'bxxx;
+                    4'b0100: ALUControl = 4'b0000;  // ADD
+                    4'b0010: ALUControl = 4'b0001;  // SUB
+                    4'b0000: ALUControl = 4'b0010;  // AND
+                    4'b1100: ALUControl = 4'b0011;  // ORR
+                    4'b1101: ALUControl = 4'b0100;  // MOV
+                    default: ALUControl = 4'bxxxx;
                 endcase
             end
             
@@ -112,11 +112,11 @@ module decode (
                 FlagW[0] = 1'b0;      // MUL no afecta carry flag
             end else begin
                 FlagW[1] = Funct[0];
-                FlagW[0] = Funct[0] & ((ALUControl == 3'b000) | (ALUControl == 3'b001));
+                FlagW[0] = Funct[0] & ((ALUControl == 4'b0000) | (ALUControl == 4'b0001));
             end
         end
         else begin
-            ALUControl = 3'b000;
+            ALUControl = 4'b0000;
             FlagW = 2'b00;
         end
     end

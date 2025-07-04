@@ -2,7 +2,7 @@
 
 module alu(
     input  [31:0] SrcA, SrcB,
-    input  [2:0]  ALUControl,
+    input  [3:0]  ALUControl,
     input  wire   SMullCondition,  // NUEVA ENTRADA
     output reg [31:0] ALUResult,
     output wire [3:0] ALUFlags
@@ -24,13 +24,13 @@ module alu(
     
     always @(*) begin
         casex (ALUControl)
-            3'b00?: ALUResult = sum;                    // ADD/SUB
-            3'b010: ALUResult = SrcA & SrcB;            // AND
-            3'b011: ALUResult = SrcA | SrcB;            // ORR
-            3'b100: ALUResult = SrcB;                   // MOV (A = 0, B = val)
-            3'b101: ALUResult = mul_result[31:0];       // MUL
-            3'b110: ALUResult = SMullCondition ? smul_result[31:0] : mul_result[31:0];     // MODIFICADO
-            3'b111: ALUResult = SMullCondition ? smul_result[63:32] : mul_result[63:32];  // MODIFICADO
+            4'b000?: ALUResult = sum;                    // ADD/SUB
+            4'b0010: ALUResult = SrcA & SrcB;            // AND
+            4'b0011: ALUResult = SrcA | SrcB;            // ORR
+            4'b0100: ALUResult = SrcB;                   // MOV (A = 0, B = val)
+            4'b0101: ALUResult = mul_result[31:0];       // MUL
+            4'b0110: ALUResult = SMullCondition ? smul_result[31:0] : mul_result[31:0];     // MODIFICADO
+            4'b0111: ALUResult = SMullCondition ? smul_result[63:32] : mul_result[63:32];  // MODIFICADO
             default: ALUResult = 32'hxxxxxxxx;
         endcase
     end
