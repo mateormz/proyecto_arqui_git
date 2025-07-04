@@ -1,3 +1,4 @@
+
 module arm (
 	clk,
 	reset,
@@ -26,6 +27,8 @@ module arm (
 	wire [1:0] ResultSrc;
 	wire [2:0] ALUControl;
 	wire UMullState; // ? Nueva señal
+    wire SMullCondition;  // ? AGREGAR
+
 
 	controller c(
 		.clk(clk),
@@ -43,7 +46,9 @@ module arm (
 		.ResultSrc(ResultSrc),
 		.ImmSrc(ImmSrc),
 		.ALUControl(ALUControl),
-		.UMullState(UMullState)  // ? Conexión con controller
+		.UMullState(UMullState),  // ? Conexión con controller
+        .SMullCondition(SMullCondition)  // ? CONECTAR SALIDA
+
 	);
 
 	datapath dp(
@@ -64,6 +69,7 @@ module arm (
 		.ResultSrc(ResultSrc),
 		.ImmSrc(ImmSrc),
 		.ALUControl(ALUControl),
-		.UMullState(UMullState)  // ? Conexión con datapath
+		.UMullState(UMullState),  // ? Conexión con datapath
+		.SMullCondition(SMullCondition)  // ? CONECTAR
 	);
 endmodule

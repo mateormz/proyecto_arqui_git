@@ -3,7 +3,7 @@ module mainfsm (
     reset,
     Op,
     Funct,
-    UMullCondition,
+    LongMullCondition,
     IRWrite,
     AdrSrc,
     ALUSrcA,
@@ -20,7 +20,7 @@ module mainfsm (
     input wire reset;
     input wire [1:0] Op;
     input wire [5:0] Funct;
-    input wire UMullCondition;
+    input wire LongMullCondition;
     output wire IRWrite;
     output wire AdrSrc;
     output wire [1:0] ALUSrcA;
@@ -66,7 +66,7 @@ module mainfsm (
             DECODE:
                 case (Op)
                     2'b00: begin
-                        if (UMullCondition) // Usar UMullCondition del decode
+                        if (LongMullCondition) // Usar UMullCondition del decode
                             nextstate = EXECUTER;  // Ir a EXECUTER para hacer el cálculo
                         else if (Funct[5])
                             nextstate = EXECUTEI;
@@ -78,7 +78,7 @@ module mainfsm (
                     default: nextstate = UNKNOWN;
                 endcase
             EXECUTER: begin
-                if (UMullCondition)
+                if (LongMullCondition)
                     nextstate = UMULL1;  // Después del cálculo, ir a guardar RdLo
                 else
                     nextstate = ALUWB;

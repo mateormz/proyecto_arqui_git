@@ -3,6 +3,7 @@
 module alu(
     input  [31:0] SrcA, SrcB,
     input  [2:0]  ALUControl,
+    input  wire   SMullCondition,  // NUEVA ENTRADA
     output reg [31:0] ALUResult,
     output wire [3:0] ALUFlags
 );
@@ -10,10 +11,16 @@ module alu(
     wire [31:0] condinvb;
     wire [32:0] sum;
     wire [63:0] mul_result;
+    wire signed [63:0] smul_result;  // NUEVA SEÑAL
+
     
     assign condinvb = ALUControl[0] ? ~SrcB : SrcB;
     assign sum = SrcA + condinvb + ALUControl[0];
     assign mul_result = SrcA * SrcB;
+    
+    // Multiplicación signed (NUEVA)
+    assign smul_result = $signed(SrcA) * $signed(SrcB);
+
     
     always @(*) begin
         casex (ALUControl)
@@ -22,8 +29,8 @@ module alu(
             3'b011: ALUResult = SrcA | SrcB;            // ORR
             3'b100: ALUResult = SrcB;                   // MOV (A = 0, B = val)
             3'b101: ALUResult = mul_result[31:0];       // MUL
-            3'b110: ALUResult = mul_result[31:0];       // UMULL - parte baja
-            3'b111: ALUResult = mul_result[63:32];      // UMULL - parte alta
+            3'b110: ALUResult = SMullCondition ? smul_result[31:0] : mul_result[31:0];     // MODIFICADO
+            3'b111: ALUResult = SMullCondition ? smul_result[63:32] : mul_result[63:32];  // MODIFICADO
             default: ALUResult = 32'hxxxxxxxx;
         endcase
     end

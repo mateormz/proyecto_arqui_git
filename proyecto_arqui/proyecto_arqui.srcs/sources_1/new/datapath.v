@@ -18,7 +18,9 @@ module datapath (
     input wire [1:0] ResultSrc,
     input wire [1:0] ImmSrc,
     input wire [2:0] ALUControl,
-    input wire UMullState  // entrada adicional para indicar si estamos en el segundo ciclo de UMULL
+    input wire UMullState,  // entrada adicional para indicar si estamos en el segundo ciclo de UMULL
+    input wire SMullCondition  // NUEVA ENTRADA
+
 );
 
     wire [31:0] PC;
@@ -37,10 +39,16 @@ module datapath (
     wire [3:0] WA3;
     wire MulCondition;
     wire UMullCondition;
+    wire SMullCondition_internal;  // NUEVA SEÑAL INTERNA
+
 
     // Detectar MUL y UMULL
     assign MulCondition    = (Instr[27:21] == 7'b0000000) && (Instr[7:4] == 4'b1001);
     assign UMullCondition  = (Instr[27:21] == 7'b0000100) && (Instr[7:4] == 4'b1001);
+    assign SMullCondition_internal = (Instr[27:21] == 7'b0000110) && (Instr[7:4] == 4'b1001);  // NUEVA DETECCIÓN
+
+    // Combinar condiciones para los muxes
+    wire LongMullCondition = UMullCondition | SMullCondition_internal;
 
     // PC Register
     flopenr #(32) pcreg (
@@ -78,25 +86,25 @@ module datapath (
 
     // Multiplexores de lectura de registros
     mux2 #(4) ra1mux (
-        .d0(UMullCondition ? Instr[3:0] : 
-             MulCondition  ? Instr[3:0] :
-                             Instr[19:16]),
+        .d0(LongMullCondition ? Instr[3:0] : 
+             MulCondition ? Instr[3:0] :
+                            Instr[19:16]),
         .d1(4'b1111),
         .s(RegSrc[0]),
         .y(RA1)
     );
 
     mux2 #(4) ra2mux (
-        .d0(UMullCondition ? Instr[11:8] : 
-             MulCondition  ? Instr[11:8] :
-                             Instr[3:0]),
+        .d0(LongMullCondition ? Instr[11:8] : 
+             MulCondition ? Instr[11:8] :
+                            Instr[3:0]),
         .d1(Instr[15:12]),
         .s(RegSrc[1]),
         .y(RA2)
     );
 
     // Registro de escritura (corregido para alternar entre RdLo y RdHi en UMULL)
-    assign WA3 = UMullCondition ?
+    assign WA3 = LongMullCondition ?
                  (UMullState ? Instr[15:12] : Instr[19:16]) :
                  (MulCondition ? Instr[19:16] : Instr[15:12]);
 
@@ -151,6 +159,7 @@ module datapath (
         .SrcA(SrcA),
         .SrcB(SrcB),
         .ALUControl(ALUControl),
+        .SMullCondition(SMullCondition),  // NUEVA CONEXIÓN
         .ALUResult(ALUResult),
         .ALUFlags(ALUFlags)
     );

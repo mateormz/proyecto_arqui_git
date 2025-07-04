@@ -19,7 +19,8 @@ module decode (
     ImmSrc,
     RegSrc,
     ALUControl,
-    UMullCondition
+    UMullCondition,
+    SMullCondition  // NUEVA SEÑAL
 );
     input wire clk;
     input wire reset;
@@ -42,6 +43,7 @@ module decode (
     output wire [1:0] RegSrc;
     output reg [2:0] ALUControl;
     output wire UMullCondition;
+    output wire SMullCondition;  // NUEVA SALIDA
     
     wire Branch;
     wire ALUOp;
@@ -52,12 +54,17 @@ module decode (
     
     assign UMullCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00100) && (InstrLow == 4'b1001);
     
+    assign SMullCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00110) && (InstrLow == 4'b1001);  // NUEVA DETECCIÓN
+
+    // Combinar condiciones de multiplicación larga
+    wire LongMullCondition = UMullCondition | SMullCondition;
+    
     mainfsm fsm(
         .clk(clk),
         .reset(reset),
         .Op(Op),
         .Funct(Funct),
-        .UMullCondition(UMullCondition),
+        .LongMullCondition(LongMullCondition),
         .IRWrite(IRWrite),
         .AdrSrc(AdrSrc),
         .ALUSrcA(ALUSrcA),
@@ -79,7 +86,7 @@ module decode (
     always @(*) begin
         if (ALUOp) begin
             // Primero verificar si es una operación UMULL
-            if (UMullCondition) begin
+            if (LongMullCondition) begin  // UMULL o SMULL
                 ALUControl = UMullState ? 3'b111 : 3'b110;  // 111 para parte alta, 110 para parte baja
             end
             // Luego verificar si es una operación MUL
@@ -97,7 +104,7 @@ module decode (
             end
             
             // Configuración de FlagW
-            if (UMullCondition) begin
+            if (LongMullCondition) begin
                 FlagW[1] = Funct[0] & UMullState;  // S bit para UMULL, solo en segundo ciclo
                 FlagW[0] = 1'b0;                   // UMULL no afecta carry flag
             end else if (MulCondition) begin
