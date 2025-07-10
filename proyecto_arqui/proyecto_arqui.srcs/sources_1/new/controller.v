@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 module controller (
     clk,
     reset,
@@ -16,7 +15,13 @@ module controller (
     ImmSrc,
     ALUControl,
     UMullState,
-    SMullCondition  // ? SOLO AGREGAR ESTA SALIDA
+    SMullCondition,
+    // Nuevas señales para FPU
+    FPUOp,
+    FPRegWrite,
+    FPUSrcA,
+    FPUSrcB,
+    FPUControl
 );
     input wire clk;
     input wire reset;
@@ -34,7 +39,14 @@ module controller (
     output wire [1:0] ImmSrc;
     output wire [3:0] ALUControl;
     output wire UMullState;
-    output wire SMullCondition;  // ? NUEVA SALIDA
+    output wire SMullCondition;
+    
+    // Nuevas salidas para FPU
+    output wire FPUOp;
+    output wire FPRegWrite;
+    output wire [1:0] FPUSrcA;
+    output wire [1:0] FPUSrcB;
+    output wire [2:0] FPUControl;
     
     wire [1:0] FlagW;
     wire PCS;
@@ -63,8 +75,14 @@ module controller (
         .ImmSrc(ImmSrc),
         .RegSrc(RegSrc),
         .ALUControl(ALUControl),
-        .UMullCondition(),  // ? NO CONECTAR (no se usa afuera)
-        .SMullCondition(SMullCondition)  // ? CONECTAR PARA SACAR
+        .UMullCondition(),  // NO CONECTAR (no se usa afuera)
+        .SMullCondition(SMullCondition),
+        // Conexiones FPU
+        .FPUOp(FPUOp),
+        .FPRegWrite(FPRegWrite),
+        .FPUSrcA(FPUSrcA),
+        .FPUSrcB(FPUSrcB),
+        .FPUControl(FPUControl)
     );
     
     condlogic cl(

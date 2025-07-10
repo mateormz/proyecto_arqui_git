@@ -1,4 +1,3 @@
-
 module arm (
 	clk,
 	reset,
@@ -26,9 +25,15 @@ module arm (
 	wire [1:0] ImmSrc;
 	wire [1:0] ResultSrc;
 	wire [3:0] ALUControl;
-	wire UMullState; // ? Nueva señal
-    wire SMullCondition;  // ? AGREGAR
-
+	wire UMullState;
+    wire SMullCondition;
+    
+    // Nuevas señales para FPU
+    wire FPUOp;
+    wire FPRegWrite;
+    wire [1:0] FPUSrcA;
+    wire [1:0] FPUSrcB;
+    wire [2:0] FPUControl;
 
 	controller c(
 		.clk(clk),
@@ -46,9 +51,14 @@ module arm (
 		.ResultSrc(ResultSrc),
 		.ImmSrc(ImmSrc),
 		.ALUControl(ALUControl),
-		.UMullState(UMullState),  // ? Conexión con controller
-        .SMullCondition(SMullCondition)  // ? CONECTAR SALIDA
-
+		.UMullState(UMullState),
+        .SMullCondition(SMullCondition),
+        // Conexiones FPU
+        .FPUOp(FPUOp),
+        .FPRegWrite(FPRegWrite),
+        .FPUSrcA(FPUSrcA),
+        .FPUSrcB(FPUSrcB),
+        .FPUControl(FPUControl)
 	);
 
 	datapath dp(
@@ -69,7 +79,13 @@ module arm (
 		.ResultSrc(ResultSrc),
 		.ImmSrc(ImmSrc),
 		.ALUControl(ALUControl),
-		.UMullState(UMullState),  // ? Conexión con datapath
-		.SMullCondition(SMullCondition)  // ? CONECTAR
+		.UMullState(UMullState),
+		.SMullCondition(SMullCondition),
+		// Conexiones FPU
+		.FPUOp(FPUOp),
+		.FPRegWrite(FPRegWrite),
+		.FPUSrcA(FPUSrcA),
+		.FPUSrcB(FPUSrcB),
+		.FPUControl(FPUControl)
 	);
 endmodule
