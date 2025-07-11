@@ -21,8 +21,8 @@ module decode (
     ALUControl,
     UMullCondition,
     SMullCondition,
-    FADDCondition,    // NUEVA SALIDA
-    FMULCondition     // NUEVA SALIDA
+    FADDCondition,
+    FMULCondition
 );
     input wire clk;
     input wire reset;
@@ -46,8 +46,8 @@ module decode (
     output reg [3:0] ALUControl;
     output wire UMullCondition;
     output wire SMullCondition;
-    output wire FADDCondition;  // NUEVA SALIDA
-    output wire FMULCondition;  // NUEVA SALIDA
+    output wire FADDCondition;
+    output wire FMULCondition;
     
     wire Branch;
     wire ALUOp;
@@ -77,7 +77,7 @@ module decode (
         .Op(Op),
         .Funct(Funct),
         .LongMullCondition(LongMullCondition),
-        .FloatCondition(FloatCondition),  // NUEVA ENTRADA
+        .FloatCondition(FloatCondition),
         .IRWrite(IRWrite),
         .AdrSrc(AdrSrc),
         .ALUSrcA(ALUSrcA),
@@ -100,10 +100,20 @@ module decode (
         if (ALUOp) begin
             // Verificar operaciones de punto flotante
             if (FloatCondition) begin
-                if (FADDCondition)
-                    ALUControl = 4'b1001;  // Código para FADD
-                else if (FMULCondition)
-                    ALUControl = 4'b1010;  // Código para FMUL
+                if (FADDCondition) begin
+                    // FADD: usar Funct[1] para distinguir 16/32 bits
+                    if (Funct[1] == 1'b0)
+                        ALUControl = 4'b1001;  // FADD 32-bit
+                    else
+                        ALUControl = 4'b1011;  // FADD 16-bit
+                end
+                else if (FMULCondition) begin
+                    // FMUL: usar Funct[1] para distinguir 16/32 bits
+                    if (Funct[1] == 1'b0)
+                        ALUControl = 4'b1010;  // FMUL 32-bit
+                    else
+                        ALUControl = 4'b1100;  // FMUL 16-bit
+                end
                 else
                     ALUControl = 4'bxxxx;
             end
