@@ -17,8 +17,7 @@ module extend (
     assign rotate_amount = rotate * 2;  // Cantidad de rotación
     
     // Implementar rotación circular a la derecha
-    assign rotated_imm = (rotate == 4'b0000) ? {24'b0, imm8} :
-                        ({24'b0, imm8} >> rotate_amount) | 
+    assign rotated_imm = ({24'b0, imm8} >> rotate_amount) | 
                         ({24'b0, imm8} << (32 - rotate_amount));
     
     always @(*)

@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 module controller (
     clk,
     reset,
@@ -16,7 +15,9 @@ module controller (
     ImmSrc,
     ALUControl,
     UMullState,
-    SMullCondition  // ? SOLO AGREGAR ESTA SALIDA
+    SMullCondition,
+    FADDCondition,  // NUEVA SALIDA
+    FMULCondition   // NUEVA SALIDA
 );
     input wire clk;
     input wire reset;
@@ -34,7 +35,9 @@ module controller (
     output wire [1:0] ImmSrc;
     output wire [3:0] ALUControl;
     output wire UMullState;
-    output wire SMullCondition;  // ? NUEVA SALIDA
+    output wire SMullCondition;
+    output wire FADDCondition;  // NUEVA SALIDA
+    output wire FMULCondition;  // NUEVA SALIDA
     
     wire [1:0] FlagW;
     wire PCS;
@@ -63,8 +66,10 @@ module controller (
         .ImmSrc(ImmSrc),
         .RegSrc(RegSrc),
         .ALUControl(ALUControl),
-        .UMullCondition(),  // ? NO CONECTAR (no se usa afuera)
-        .SMullCondition(SMullCondition)  // ? CONECTAR PARA SACAR
+        .UMullCondition(),
+        .SMullCondition(SMullCondition),
+        .FADDCondition(FADDCondition),  // NUEVA CONEXIÓN
+        .FMULCondition(FMULCondition)   // NUEVA CONEXIÓN
     );
     
     condlogic cl(

@@ -11,6 +11,7 @@ verilog xil_defaultlib  \
 "../../../../proyecto_arqui.srcs/sources_1/new/flopenr.v" \
 "../../../../proyecto_arqui.srcs/sources_1/new/flopr.v" \
 "../../../../proyecto_arqui.srcs/sources_1/new/floprdual.v" \
+"../../../../proyecto_arqui.srcs/sources_1/new/fpu.v" \
 "../../../../proyecto_arqui.srcs/sources_1/new/mainfsm.v" \
 "../../../../proyecto_arqui.srcs/sources_1/new/mem.v" \
 "../../../../proyecto_arqui.srcs/sources_1/new/mux2.v" \

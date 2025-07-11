@@ -18,9 +18,10 @@ module datapath (
     input wire [1:0] ResultSrc,
     input wire [1:0] ImmSrc,
     input wire [3:0] ALUControl,
-    input wire UMullState,  // entrada adicional para indicar si estamos en el segundo ciclo de UMULL
-    input wire SMullCondition  // NUEVA ENTRADA
-
+    input wire UMullState,
+    input wire SMullCondition,
+    input wire FADDCondition,  // NUEVA ENTRADA
+    input wire FMULCondition   // NUEVA ENTRADA
 );
 
     wire [31:0] PC;
@@ -39,13 +40,16 @@ module datapath (
     wire [3:0] WA3;
     wire MulCondition;
     wire UMullCondition;
-    wire SMullCondition_internal;  // NUEVA SEÑAL INTERNA
+    wire SMullCondition_internal;
+    wire FloatCondition;  // NUEVA SEÑAL
 
-
-    // Detectar MUL y UMULL
+    // Detectar MUL, UMULL, SMULL
     assign MulCondition    = (Instr[27:21] == 7'b0000000) && (Instr[7:4] == 4'b1001);
     assign UMullCondition  = (Instr[27:21] == 7'b0000100) && (Instr[7:4] == 4'b1001);
-    assign SMullCondition_internal = (Instr[27:21] == 7'b0000110) && (Instr[7:4] == 4'b1001);  // NUEVA DETECCIÓN
+    assign SMullCondition_internal = (Instr[27:21] == 7'b0000110) && (Instr[7:4] == 4'b1001);
+    
+    // Detectar operaciones de punto flotante (NUEVA)
+    assign FloatCondition = FADDCondition | FMULCondition;
 
     // Combinar condiciones para los muxes
     wire LongMullCondition = UMullCondition | SMullCondition_internal;
@@ -86,7 +90,8 @@ module datapath (
 
     // Multiplexores de lectura de registros
     mux2 #(4) ra1mux (
-        .d0(LongMullCondition ? Instr[3:0] : 
+        .d0(FloatCondition ? Instr[19:16] :    // NUEVA LÓGICA para punto flotante
+             LongMullCondition ? Instr[3:0] : 
              MulCondition ? Instr[3:0] :
                             Instr[19:16]),
         .d1(4'b1111),
@@ -95,7 +100,8 @@ module datapath (
     );
 
     mux2 #(4) ra2mux (
-        .d0(LongMullCondition ? Instr[11:8] : 
+        .d0(FloatCondition ? Instr[3:0] :      // NUEVA LÓGICA para punto flotante
+             LongMullCondition ? Instr[11:8] : 
              MulCondition ? Instr[11:8] :
                             Instr[3:0]),
         .d1(Instr[15:12]),
@@ -103,8 +109,9 @@ module datapath (
         .y(RA2)
     );
 
-    // Registro de escritura (corregido para alternar entre RdLo y RdHi en UMULL)
-    assign WA3 = LongMullCondition ?
+    // Registro de escritura
+    assign WA3 = FloatCondition ? Instr[15:12] :           // NUEVA LÓGICA para punto flotante
+                 LongMullCondition ?
                  (UMullState ? Instr[15:12] : Instr[19:16]) :
                  (MulCondition ? Instr[19:16] : Instr[15:12]);
 
@@ -139,9 +146,10 @@ module datapath (
     );
 
     // Multiplexores para entradas del ALU
-    mux2 #(32) srcamux (
+    mux3 #(32) srcamux (
         .d0(A),
         .d1(PC),
+        .d2(32'd0),
         .s(ALUSrcA),
         .y(SrcA)
     );
@@ -154,12 +162,15 @@ module datapath (
         .y(SrcB)
     );
 
-    // ALU
+    // ALU (MODIFICADO)
     alu alu_inst (
         .SrcA(SrcA),
         .SrcB(SrcB),
         .ALUControl(ALUControl),
-        .SMullCondition(SMullCondition),  // NUEVA CONEXIÓN
+        .SMullCondition(SMullCondition),
+        .FADDCondition(FADDCondition),  // NUEVA CONEXIÓN
+        .FMULCondition(FMULCondition),  // NUEVA CONEXIÓN
+        .InstrRd(Instr[15:12]),         // NUEVA CONEXIÓN para detectar 16/32 bits
         .ALUResult(ALUResult),
         .ALUFlags(ALUFlags)
     );

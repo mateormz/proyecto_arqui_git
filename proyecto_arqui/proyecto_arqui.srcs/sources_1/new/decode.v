@@ -5,7 +5,7 @@ module decode (
     Funct,
     Rd,
     InstrLow,
-    UMullState,  // Nueva entrada para saber el estado de UMULL
+    UMullState,
     FlagW,
     PCS,
     NextPC,
@@ -20,7 +20,9 @@ module decode (
     RegSrc,
     ALUControl,
     UMullCondition,
-    SMullCondition  // NUEVA SEÑAL
+    SMullCondition,
+    FADDCondition,    // NUEVA SALIDA
+    FMULCondition     // NUEVA SALIDA
 );
     input wire clk;
     input wire reset;
@@ -28,7 +30,7 @@ module decode (
     input wire [5:0] Funct;
     input wire [3:0] Rd;
     input wire [3:0] InstrLow;
-    input wire UMullState;  // 0 = primer ciclo (RdLo), 1 = segundo ciclo (RdHi)
+    input wire UMullState;
     output reg [1:0] FlagW;
     output wire PCS;
     output wire NextPC;
@@ -43,21 +45,31 @@ module decode (
     output wire [1:0] RegSrc;
     output reg [3:0] ALUControl;
     output wire UMullCondition;
-    output wire SMullCondition;  // NUEVA SALIDA
+    output wire SMullCondition;
+    output wire FADDCondition;  // NUEVA SALIDA
+    output wire FMULCondition;  // NUEVA SALIDA
     
     wire Branch;
     wire ALUOp;
-    wire MulCondition;   // Señal para detectar condición de MUL
+    wire MulCondition;
     
     // Detectar cuando Op=00 (bits 27:26) y Funct[5:2]=0000 (bits 25:22) y InstrLow=1001
     assign MulCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00000) && (InstrLow == 4'b1001);
     
     assign UMullCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00100) && (InstrLow == 4'b1001);
     
-    assign SMullCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00110) && (InstrLow == 4'b1001);  // NUEVA DETECCIÓN
+    assign SMullCondition = (Op == 2'b00) && (Funct[5:1] == 5'b00110) && (InstrLow == 4'b1001);
 
-    // Combinar condiciones de multiplicación larga
+    // Detectar instrucciones de punto flotante
+    // FADD: Op=11 (bits 27:26), Funct[5:4]=11 (bits 25:24), Funct[3:2]=00 (bits 23:22), InstrLow[3:0]=1010
+    assign FADDCondition = (Op == 2'b11) && (Funct[5:4] == 2'b11) && (Funct[3:2] == 2'b00) && (InstrLow == 4'b1010);
+    
+    // FMUL: Op=11 (bits 27:26), Funct[5:4]=11 (bits 25:24), Funct[3:2]=10 (bits 23:22), InstrLow[3:0]=1010
+    assign FMULCondition = (Op == 2'b11) && (Funct[5:4] == 2'b11) && (Funct[3:2] == 2'b10) && (InstrLow == 4'b1010);
+
+    // Combinar condiciones
     wire LongMullCondition = UMullCondition | SMullCondition;
+    wire FloatCondition = FADDCondition | FMULCondition;
     
     mainfsm fsm(
         .clk(clk),
@@ -65,6 +77,7 @@ module decode (
         .Op(Op),
         .Funct(Funct),
         .LongMullCondition(LongMullCondition),
+        .FloatCondition(FloatCondition),  // NUEVA ENTRADA
         .IRWrite(IRWrite),
         .AdrSrc(AdrSrc),
         .ALUSrcA(ALUSrcA),
@@ -85,13 +98,22 @@ module decode (
     
     always @(*) begin
         if (ALUOp) begin
-            // Primero verificar si es una operación UMULL
-            if (LongMullCondition) begin  // UMULL o SMULL
-                ALUControl = UMullState ? 4'b0111 : 4'b0110;  // 111 para parte alta, 110 para parte baja
+            // Verificar operaciones de punto flotante
+            if (FloatCondition) begin
+                if (FADDCondition)
+                    ALUControl = 4'b1001;  // Código para FADD
+                else if (FMULCondition)
+                    ALUControl = 4'b1010;  // Código para FMUL
+                else
+                    ALUControl = 4'bxxxx;
             end
-            // Luego verificar si es una operación MUL
+            // Verificar UMULL/SMULL
+            else if (LongMullCondition) begin
+                ALUControl = UMullState ? 4'b0111 : 4'b0110;
+            end
+            // Verificar MUL
             else if (MulCondition) begin
-                ALUControl = 4'b0101;  // Código para MUL
+                ALUControl = 4'b0101;
             end else begin
                 case (Funct[4:1])
                     4'b0100: ALUControl = 4'b0000;  // ADD
@@ -99,18 +121,21 @@ module decode (
                     4'b0000: ALUControl = 4'b0010;  // AND
                     4'b1100: ALUControl = 4'b0011;  // ORR
                     4'b1101: ALUControl = 4'b0100;  // MOV
-                    4'b0011: ALUControl = 4'b1000;  // DIV - NUEVA LÍNEA
+                    4'b0011: ALUControl = 4'b1000;  // DIV
                     default: ALUControl = 4'bxxxx;
                 endcase
             end
             
             // Configuración de FlagW
-            if (LongMullCondition) begin
-                FlagW[1] = Funct[0] & UMullState;  // S bit para UMULL, solo en segundo ciclo
-                FlagW[0] = 1'b0;                   // UMULL no afecta carry flag
+            if (FloatCondition) begin
+                FlagW = 2'b00;  // Las operaciones de punto flotante no afectan flags ARM
+            end
+            else if (LongMullCondition) begin
+                FlagW[1] = Funct[0] & UMullState;
+                FlagW[0] = 1'b0;
             end else if (MulCondition) begin
-                FlagW[1] = Funct[0];  // S bit para MUL
-                FlagW[0] = 1'b0;      // MUL no afecta carry flag
+                FlagW[1] = Funct[0];
+                FlagW[0] = 1'b0;
             end else begin
                 FlagW[1] = Funct[0];
                 FlagW[0] = Funct[0] & ((ALUControl == 4'b0000) | (ALUControl == 4'b0001));
