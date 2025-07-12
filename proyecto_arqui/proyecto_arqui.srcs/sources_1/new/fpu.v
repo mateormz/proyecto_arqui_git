@@ -8,7 +8,7 @@ module fpu (
   reg [31:0] a_fp, b_fp, res_fp;
   reg overflow;
   
-  // Conversión de half precision a single precision
+  // Conversi?n de half precision a single precision
   function [31:0] half2single;
     input [15:0] h;
     reg sign;
@@ -36,7 +36,7 @@ module fpu (
     end
   endfunction
   
-  // Conversión de single precision a half precision
+  // Conversi?n de single precision a half precision
   function [15:0] single2half;
     input [31:0] s;
     reg sign;
@@ -58,7 +58,7 @@ module fpu (
       end else begin
         exp_h = exp_s - 8'd127 + 5'd15;
         frac_h = frac_s[22:13];
-        // Saturación para evitar overflow
+        // Saturaci?n para evitar overflow
         if (exp_h > 5'd30) begin
           exp_h = 5'b11111;
           frac_h = 0;
@@ -161,7 +161,7 @@ module fpu (
     end
   endfunction
   
-  // Multiplicación de punto flotante IEEE 754
+  // Multiplicaci?n de punto flotante IEEE 754
   function [31:0] fp_mul;
     input [31:0] a, b;
     reg sign_a, sign_b, sign_res;
@@ -215,7 +215,7 @@ module fpu (
   endfunction
   
   always @(*) begin
-    // Convertir entradas según la precisión
+    // Convertir entradas seg?n la precisi?n
     if (precision) begin
       a_fp = a;
       b_fp = b;
@@ -224,7 +224,7 @@ module fpu (
       b_fp = half2single(b[15:0]);
     end
     
-    // Realizar operación
+    // Realizar operaci?n
     case (op)
       1'b0: res_fp = fp_add(a_fp, b_fp);
       1'b1: res_fp = fp_mul(a_fp, b_fp);
@@ -234,7 +234,7 @@ module fpu (
     // Detectar overflow
     overflow = (res_fp[30:23] == 8'hFF);
     
-    // Convertir resultado según la precisión
+    // Convertir resultado seg?n la precisi?n
     if (precision) begin
       result = res_fp;
     end else begin

@@ -20,14 +20,14 @@ module alu(
     assign sum = SrcA + condinvb + ALUControl[0];
     assign mul_result = SrcA * SrcB;
     
-    // Multiplicación signed
+    // Multiplicaci?n signed
     assign smul_result = $signed(SrcA) * $signed(SrcB);
 
     // Instancia del FPU sintetizable
     fpu fpu_inst (
         .a(SrcA),
         .b(SrcB),
-        .op(ALUControl[1]),           // 0 para ADD, 1 para MUL
+        .op(~ALUControl[0]),           // 0 para ADD, 1 para MUL
         .precision(~ALUControl[1]),   // 0 para 16-bit, 1 para 32-bit
         .result(fpu_result),
         .overflowFlag(fpu_overflow)

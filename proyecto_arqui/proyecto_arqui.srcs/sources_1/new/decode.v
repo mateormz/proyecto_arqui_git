@@ -140,7 +140,7 @@ module decode (
                 endcase
             end
             
-            // Configuración de FlagW
+            // Configuraci?n de FlagW
             if (FloatCondition) begin
                 FlagW = 2'b00;  // Las operaciones de punto flotante no afectan flags ARM
             end
