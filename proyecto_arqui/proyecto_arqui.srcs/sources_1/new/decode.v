@@ -96,9 +96,13 @@ module decode (
     assign RegSrc[1] = Op == 2'b01; 
     assign RegSrc[0] = Op == 2'b10;
     
+    
     always @(*) begin
         if (ALUOp) begin
             // Verificar operaciones de punto flotante
+          $display("DECODE: Time=%0t | Op=%b Funct=%b InstrLow=%b | FADDCondition=%b FMULCondition=%b FloatCondition=%b", 
+          $time, Op, Funct, InstrLow, FADDCondition, FMULCondition, FloatCondition);
+
             if (FloatCondition) begin
                 if (FADDCondition) begin
                     // FADD: usar Funct[1] para distinguir 16/32 bits
@@ -158,4 +162,5 @@ module decode (
     end
     
     assign PCS = ((Rd == 4'b1111) & RegW) | Branch;
+    
 endmodule

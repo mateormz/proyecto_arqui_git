@@ -18,4 +18,9 @@ module mem (
 	always @(posedge clk)
 		if (we)
 			RAM[a[31:2]] <= wd;
+			
+	always @(posedge clk)
+	if (!we)
+		$display("PC = %h, Instr = %h", a, RAM[a[31:2]]);
+
 endmodule

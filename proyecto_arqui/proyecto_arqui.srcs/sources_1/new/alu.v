@@ -23,12 +23,12 @@ module alu(
     // Multiplicación signed
     assign smul_result = $signed(SrcA) * $signed(SrcB);
 
-    // Instancia del FPU mejorado
+    // Instancia del FPU sintetizable
     fpu fpu_inst (
         .a(SrcA),
         .b(SrcB),
-        .op(ALUControl[0]),           // 0 para ADD, 1 para MUL
-        .precision(ALUControl[1]),    // 0 para 16-bit, 1 para 32-bit
+        .op(ALUControl[1]),           // 0 para ADD, 1 para MUL
+        .precision(~ALUControl[1]),   // 0 para 16-bit, 1 para 32-bit
         .result(fpu_result),
         .overflowFlag(fpu_overflow)
     );
@@ -51,10 +51,13 @@ module alu(
         endcase
     end
     
-    assign neg = ALUResult[31];
-    assign zero = (ALUResult == 32'b0);
-    assign carry = (ALUControl[2:1] == 2'b00) & sum[32];
-    assign overflow = (ALUControl[2:1] == 2'b00) & ~(SrcA[31] ^ SrcB[31] ^ ALUControl[0]) & (SrcA[31] ^ sum[31]);
+    // Flags para operaciones de punto flotante
+    wire fp_operation = (ALUControl[3:2] == 2'b10);
+    
+    assign neg = fp_operation ? fpu_result[31] : ALUResult[31];
+    assign zero = fp_operation ? (fpu_result == 32'b0) : (ALUResult == 32'b0);
+    assign carry = fp_operation ? fpu_overflow : ((ALUControl[2:1] == 2'b00) & sum[32]);
+    assign overflow = fp_operation ? fpu_overflow : ((ALUControl[2:1] == 2'b00) & ~(SrcA[31] ^ SrcB[31] ^ ALUControl[0]) & (SrcA[31] ^ sum[31]));
     assign ALUFlags = {neg, zero, carry, overflow};
     
 endmodule
