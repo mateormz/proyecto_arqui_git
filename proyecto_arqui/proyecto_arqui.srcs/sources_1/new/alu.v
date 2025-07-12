@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-
 module alu(
     input  [31:0] SrcA, SrcB,
     input  [3:0]  ALUControl,
@@ -12,7 +11,6 @@ module alu(
     wire [32:0] sum;
     wire [63:0] mul_result;
     wire signed [63:0] smul_result;  // NUEVA SEÑAL
-
     
     assign condinvb = ALUControl[0] ? ~SrcB : SrcB;
     assign sum = SrcA + condinvb + ALUControl[0];
@@ -20,7 +18,6 @@ module alu(
     
     // Multiplicación signed (NUEVA)
     assign smul_result = $signed(SrcA) * $signed(SrcB);
-
     
     always @(*) begin
         casex (ALUControl)
@@ -37,9 +34,17 @@ module alu(
     end
     
     assign neg = ALUResult[31];
-    assign zero = (ALUResult == 32'b0);
+    
+    // Zero flag: MUL solo considera 32 bits, UMULL/SMULL considera 64 bits completos
+    assign zero = (ALUControl == 4'b0101) ? (mul_result[31:0] == 32'b0) :                                        // MUL (solo 32 bits bajos)
+                  (ALUControl == 4'b0110) ? (SMullCondition ? (smul_result == 64'b0) : (mul_result == 64'b0)) :  // UMULL/SMULL
+                  (ALUControl == 4'b0111) ? (SMullCondition ? (smul_result == 64'b0) : (mul_result == 64'b0)) :  // UMULL/SMULL high
+                  (ALUResult == 32'b0);                                                                            // Otras operaciones
+    
     assign carry = (ALUControl[2:1] == 2'b00) & sum[32];
+    
     assign overflow = (ALUControl[2:1] == 2'b00) & ~(SrcA[31] ^ SrcB[31] ^ ALUControl[0]) & (SrcA[31] ^ sum[31]);
+    
     assign ALUFlags = {neg, zero, carry, overflow};
     
 endmodule
