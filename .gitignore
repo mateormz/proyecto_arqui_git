@@ -1,0 +1,53 @@
+# Archivos y carpetas generadas por Vivado
+*.jou
+*.log
+*.str
+*.tcl
+*.xml
+*.cache
+*.webtalk
+*.wdb
+*.data
+*.backup
+*.bak
+
+# Carpeta de ejecución y resultados
+.cache/
+.hw/
+.hw_*
+.sim/
+.sim_*
+.xpr/
+.xpr.cache/
+.xpr.hw/
+.xpr.sim/
+.ip_user_files/
+.project/
+.sdk/
+.vivado/
+
+# Resultados de simulación
+*.vcd
+*.vpd
+*.wlf
+
+# Archivos de implementación
+*.runs/
+*.srcs/
+*.impl/
+*.synth/
+
+# Otros posibles generados
+vivado.log
+vivado.jou
+vivado*
+crash.data
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales de editores
+*~
+*.swp
+*.swo
